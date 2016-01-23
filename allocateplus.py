@@ -176,7 +176,8 @@ def score(timetable):
 			else:
 				if start:
 					cur_break += 1
-		day_start_end.append((start, end))
+		if start is not None and end is not None:
+			day_start_end.append((start, end))
 
 	break_squared = sum(x*x for x in breaks)
 	total_day_lengths = sum(b-a for a, b in day_start_end)
