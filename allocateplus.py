@@ -164,7 +164,10 @@ def score(timetable):
 				end = i
 		day_start_end.append((start, end))
 
-	return -var
+	total_day_lengths = sum(b-a for a, b in day_start_end)
+	day_starts = sum(a for a, b in day_start_end)
+
+	return (-var, -total_day_lengths, -day_starts)
 
 def variance(l):
 	n = 0
