@@ -36,6 +36,7 @@ class AllocatePlus:
 					print("Unknown status for subject {}, group {}: {}".format(subject, group, status))
 
 		self.all_acts = {} # (subject, group): {repeat: {part: json}}
+		# turns into: (subject, group): [[json, json], [json, json], [json, json]]
 		# disregard popularity for now
 		for subject, group, is_by_start_time in self.groups:
 			print("Grabbing activities for", subject, group)
@@ -62,6 +63,13 @@ class AllocatePlus:
 			self.all_acts[(subject, group)] = listify(g_dict)
 
 
+		self.unique_times = {}
+		for key in self.all_acts:
+			times = set()
+			for repeat in self.all_acts[key]:
+				parts = tuple(sorted((d["day_of_week"], d["start_time"], d["duration"]) for d in repeat))
+				times.add(parts)
+			self.unique_times[key] = times
 
 	def update_data(self):
 		self.data = self.session.get(self.get_api_url("{student[student_code]}/")).json()
