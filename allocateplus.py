@@ -149,3 +149,29 @@ def get_permutations(unique_times):
 		else:
 			yield timetable
 
+def score(timetable):
+	# Variance of day lengths
+	var = variance(list(filter(None, (sum(map(bool, day)) for day in timetable))))
+	# Length of days
+	day_start_end = [] # [(start, end)]
+	for day in timetable:
+		start = None
+		end = None
+		for i in range(22):
+			if day[i]:
+				if start is None:
+					start = i
+				end = i
+		day_start_end.append((start, end))
+
+	return -var
+
+def variance(l):
+	n = 0
+	s = 0
+	s_sq = 0
+	for x in l:
+		n += 1
+		s += x
+		s_sq += x*x
+	return (s_sq - (s * s) / n) / n
