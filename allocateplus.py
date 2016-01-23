@@ -209,4 +209,4 @@ if __name__ == '__main__':
 	perms = list(get_permutations(ap.unique_times))
 	print("Sorting all", len(perms), "permutations with no clashes")
 	perms.sort(key=score, reverse=True)
-	app.run(debug=True)
+	app.run()
