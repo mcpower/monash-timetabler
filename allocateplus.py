@@ -1,14 +1,29 @@
 """
 for each group, create a list of tuples
 mostly singletons, but lectures will be [(lecture1, lecture2, lecture3)]
+
+activities are stored like:
+(pretty name, day, starting time in blocks after 8am, block length)
+
+timetables are stored as a list of lists, with either None or a pretty name for elements
+timetable[5 (days)][22 (blocks of 30 minutes from 8am to 7pm)]
+
 """
 
 import requests
 import json
+import itertools
+from pprint import pprint
 
 API_URL = "https://allocate.timetable.monash.edu/aplus-2016/rest/student/"
 HOMEPAGE_URL = "https://allocate.timetable.monash.edu/aplus-2016/student/"
-
+DAY_TO_INDEX_DICT = {
+	"Mon": 0,
+	"Tue": 1,
+	"Wed": 2,
+	"Thu": 3,
+	"Fri": 4
+}
 
 
 class AllocatePlus:
@@ -63,13 +78,17 @@ class AllocatePlus:
 			self.all_acts[(subject, group)] = listify(g_dict)
 
 
-		self.unique_times = {}
+		self.unique_times = []
 		for key in self.all_acts:
 			times = set()
+			pretty_name = " ".join(key)
 			for repeat in self.all_acts[key]:
-				parts = tuple(sorted((d["day_of_week"], d["start_time"], d["duration"]) for d in repeat))
+				parts = tuple(sorted((pretty_name,
+								      day_to_index(d["day_of_week"]),
+								      time_to_blocks(d["start_time"]),
+								      duration_to_blocks(d["duration"])) for d in repeat))
 				times.add(parts)
-			self.unique_times[key] = times
+			self.unique_times.append(times)
 
 	def update_data(self):
 		self.data = self.session.get(self.get_api_url("{student[student_code]}/")).json()
@@ -97,3 +116,19 @@ def listify(d):
 	for index in sorted(d.keys()):
 		out.append(d[index])
 	return out
+
+def day_to_index(day):
+	return DAY_TO_INDEX_DICT[day]
+
+def time_to_blocks(time):
+	hour, minute = map(int, time.split(":"))
+	if minute == 0:
+		return 2 * (hour - 8)
+	elif minute == 30:
+		return 2 * (hour - 8) + 1
+	else:
+		print("Time isn't a multiple of 30?!?!?!", time)
+		return 2 * (hour - 8) + round(minute / 30)
+
+def duration_to_blocks(dur):
+	return int(dur) // 30
