@@ -13,7 +13,11 @@ timetable[5 (days)][22 (blocks of 30 minutes from 8am to 7pm)]
 import requests
 import json
 import itertools
+import sys
+from functools import reduce
 from pprint import pprint
+from flask import Flask, render_template
+app = Flask(__name__)
 
 API_URL = "https://allocate.timetable.monash.edu/aplus-2016/rest/student/"
 HOMEPAGE_URL = "https://allocate.timetable.monash.edu/aplus-2016/student/"
@@ -180,3 +184,20 @@ def variance(l):
 		s += x
 		s_sq += x*x
 	return (s_sq - (s * s) / n) / n
+
+@app.route("/")
+@app.route("/<int:index>")
+def show_timetable(index=0):
+	global perms
+	return render_template("timetable.html", timetable=perms[index], index=index, score=score(perms[index]))
+
+if __name__ == '__main__':
+	if len(sys.argv) != 3:
+		print("usage:", sys.argv[0], "<Monash username> <Monash password>")
+		sys.exit()
+	ap = AllocatePlus.login(*sys.argv[1:])
+	print("Getting all", reduce(int.__mul__, map(len, ap.unique_times)), "timetable permutations")
+	perms = list(get_permutations(ap.unique_times))
+	print("Sorting all", len(perms), "permutations with no clashes")
+	perms.sort(key=score, reverse=True)
+	app.run(debug=True)

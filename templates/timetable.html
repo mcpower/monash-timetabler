@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Timetable #{{ index }}</title>
+	<style type="text/css">
+		table {
+			table-layout: fixed;
+			width: 100%;
+			height: 75%;
+			white-space: nowrap;
+		}
+
+		body, html {
+			height: 100%;
+			margin: 0px;
+		}
+
+		textarea {
+			font-size: 15px;
+		}
+	</style>
+</head>
+<body>
+	<div>{{ score }}</div>
+	<table>
+		<thead>
+			<tr>
+				<th width="60"></th>
+				<th>Monday</th>
+				<th>Tuesday</th>
+				<th>Wednesday</th>
+				<th>Thursday</th>
+				<th>Friday</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for time in range(22) %}
+			<tr>
+				<td>
+					{% if time > 9 %}
+					{{ time // 2 - 4}}:{% if time is divisibleby 2 %}0{% else %}3{% endif %}0 pm
+					{% else %}
+					{{ time // 2 + 8}}:{% if time is divisibleby 2 %}0{% else %}3{% endif %}0 am
+					{% endif %}
+
+					
+				</td>
+				{% for day in range(5) %}
+				<td>{{ timetable[day][time] if timetable[day][time] else "" }}</td>
+				{% endfor %}
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	<a href="{{ index - 1 }}">Prev</a> <a href="{{ index + 1 }}">Next</a>
+</body>
+</html>
