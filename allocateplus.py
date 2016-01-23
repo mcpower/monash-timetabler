@@ -150,6 +150,8 @@ def get_permutations(unique_times):
 			yield timetable
 
 def score(timetable):
+	# Number of days spent on campus
+	days_spent = sum(map(any, timetable))
 	# Variance of day lengths
 	var = variance(list(filter(None, (sum(map(bool, day)) for day in timetable))))
 	# Length of days
@@ -167,7 +169,7 @@ def score(timetable):
 	total_day_lengths = sum(b-a for a, b in day_start_end)
 	day_starts = sum(a for a, b in day_start_end)
 
-	return (-var, -total_day_lengths, -day_starts)
+	return (-days_spent, -var, -total_day_lengths, -day_starts)
 
 def variance(l):
 	n = 0
