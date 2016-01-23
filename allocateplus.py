@@ -132,3 +132,20 @@ def time_to_blocks(time):
 
 def duration_to_blocks(dur):
 	return int(dur) // 30
+
+
+def get_permutations(unique_times):
+	for ttuple in itertools.product(*unique_times):
+		classes = flatten(ttuple)
+		timetable = [[None for i in range(22)] for j in range(5)]
+		for pretty_name, day, time, duration in classes:
+			for i in range(duration):
+				if timetable[day][time + i] is not None:
+					break
+				timetable[day][time + i] = pretty_name
+			else:
+				continue
+			break
+		else:
+			yield timetable
+
