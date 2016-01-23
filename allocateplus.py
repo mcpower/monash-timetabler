@@ -160,20 +160,29 @@ def score(timetable):
 	var = variance(list(filter(None, (sum(map(bool, day)) for day in timetable))))
 	# Length of days
 	day_start_end = [] # [(start, end)]
+	breaks = []
 	for day in timetable:
 		start = None
 		end = None
+		cur_break = 0
 		for i in range(22):
 			if day[i]:
 				if start is None:
 					start = i
 				end = i
+				if cur_break:
+					breaks.append(cur_break)
+					cur_break = 0
+			else:
+				if start:
+					cur_break += 1
 		day_start_end.append((start, end))
 
+	break_squared = sum(x*x for x in breaks)
 	total_day_lengths = sum(b-a for a, b in day_start_end)
 	day_starts = sum(a for a, b in day_start_end)
 
-	return (-days_spent, -var, -total_day_lengths, -day_starts)
+	return (-days_spent, -var, -total_day_lengths, day_starts, break_squared)
 
 def variance(l):
 	n = 0
