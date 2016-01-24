@@ -8,11 +8,22 @@
 			width: 100%;
 			height: calc(100% - 80px);
 			white-space: nowrap;
+			border-collapse: collapse;
 		}
 
 		body, html {
 			height: 100%;
 			margin: 0px;
+		}
+
+		tr:nth-child(even) {
+			background-color: #EEE;
+			border-bottom: 1px solid #BBB;
+		}
+
+		tr:nth-child(odd) {
+			background-color: #FFF;
+			border-top: 1px solid #BBB;
 		}
 	</style>
 </head>
