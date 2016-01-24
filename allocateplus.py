@@ -6,7 +6,7 @@ activities are stored like:
 (pretty name, day, starting time in blocks after 8am, block length)
 
 timetables are stored as a list of lists, with either None or a pretty name for elements
-timetable[5 (days)][22 (blocks of 30 minutes from 8am to 7pm)]
+timetable[5 (days)][24 (blocks of 30 minutes from 8am to 8pm)]
 
 """
 
@@ -141,7 +141,7 @@ def duration_to_blocks(dur):
 def get_permutations(unique_times):
 	for ttuple in itertools.product(*unique_times):
 		classes = flatten(ttuple)
-		timetable = [[None for i in range(22)] for j in range(5)]
+		timetable = [[None for i in range(24)] for j in range(5)]
 		for pretty_name, day, time, duration in classes:
 			for i in range(duration):
 				if timetable[day][time + i] is not None:
@@ -165,7 +165,7 @@ def score(timetable):
 		start = None
 		end = None
 		cur_break = 0
-		for i in range(22):
+		for i in range(24):
 			if day[i]:
 				if start is None:
 					start = i
@@ -176,7 +176,8 @@ def score(timetable):
 			else:
 				if start:
 					cur_break += 1
-		day_start_end.append((start, end))
+		if start is not None and end is not None:
+			day_start_end.append((start, end))
 
 	break_squared = sum(x*x for x in breaks)
 	total_day_lengths = sum(b-a for a, b in day_start_end)
