@@ -14,6 +14,7 @@ import requests
 import json
 import itertools
 import sys
+import colorsys
 from functools import reduce
 from pprint import pprint
 from flask import Flask, render_template
@@ -194,11 +195,50 @@ def variance(l):
         s_sq += x*x
     return (s_sq - (s * s) / n) / n
 
+
+def average(l):
+    n = 0
+    s = 0
+    for x in l:
+        n += 1
+        s += x
+    return s / n
+
+
+def create_palette(unique_times):
+    subjects = set()
+    group_to_options = {} # {group: [number of options]}
+    for s in unique_times:
+        activity, _, _, _ = next(iter(s))[0]
+        subject, group = activity
+        subjects.add(subject)
+        group_to_options.setdefault(group, []).append(len(s))
+
+    for group in group_to_options:
+        group_to_options[group] = average(group_to_options[group])
+
+    subject_hues = {subject: round(i * 360 / len(subjects)) for i, subject in enumerate(subjects)}
+    group_values = {}
+    sorted_groups = []
+    # lectures/noprefs should be pretty dark
+    for group in sorted(group_to_options, key=group_to_options.get):
+        options = group_to_options[group]
+        if options < 1.5:
+            group_values[group] = 10
+        else:
+            sorted_groups.append(group)
+
+    for i, group in enumerate(sorted_groups): # from 25 to 75
+        group_values[group] = 25 + round(i * 50 / (len(sorted_groups) - 1))
+
+    return subject_hues, group_values
+
+
 @app.route("/")
 @app.route("/<int:index>")
 def show_timetable(index=0):
-    global perms
-    return render_template("timetable.html", timetable=perms[index], index=index, score=score(perms[index]))
+    global perms, subject_hues, group_values
+    return render_template("timetable.html", timetable=perms[index], index=index, score=score(perms[index]), subject_hues=subject_hues, group_values=group_values)
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
@@ -209,4 +249,6 @@ if __name__ == '__main__':
     perms = list(get_permutations(ap.unique_times))
     print("Sorting all", len(perms), "permutations with no clashes")
     perms.sort(key=score, reverse=True)
+    print("Generating colour palette")
+    subject_hues, group_values = create_palette(ap.unique_times)
     app.run()

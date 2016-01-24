@@ -46,7 +46,12 @@
 					{% endif %}
 				</td>
 				{% for day in range(5) %}
-				<td>{{ timetable[day][time]|join(" ") if timetable[day][time] else "" }}</td>
+					{% if timetable[day][time] %}
+						{% set subject, group = timetable[day][time] %}
+						<td style="background-color:hsl({{ subject_hues[subject] }}, 100%, {{ group_values[group] }}%);color:{{ 'black' if group_values[group] > 40 else 'white' }}">{{ subject }} {{ group }}</td>
+					{% else %}
+						<td></td>
+					{% endif %}
 				{% endfor %}
 			</tr>
 			{% endfor %}
