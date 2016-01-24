@@ -46,7 +46,7 @@
 					{% endif %}
 				</td>
 				{% for day in range(5) %}
-				<td>{{ timetable[day][time] if timetable[day][time] else "" }}</td>
+				<td>{{ timetable[day][time]|join(" ") if timetable[day][time] else "" }}</td>
 				{% endfor %}
 			</tr>
 			{% endfor %}

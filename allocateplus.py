@@ -3,9 +3,9 @@ for each group, create a list of tuples
 mostly singletons, but lectures will be [(lecture1, lecture2, lecture3)]
 
 activities are stored like:
-(pretty name, day, starting time in blocks after 8am, block length)
+((subject, group), day, starting time in blocks after 8am, block length)
 
-timetables are stored as a list of lists, with either None or a pretty name for elements
+timetables are stored as a list of lists, with either None or a (subject, group) for elements
 timetable[5 (days)][24 (blocks of 30 minutes from 8am to 8pm)]
 
 """
@@ -85,9 +85,8 @@ class AllocatePlus:
         self.unique_times = []
         for key in self.all_acts:
             times = set()
-            pretty_name = " ".join(key)
             for repeat in self.all_acts[key]:
-                parts = tuple(sorted((pretty_name,
+                parts = tuple(sorted((key,
                                       day_to_index(d["day_of_week"]),
                                       time_to_blocks(d["start_time"]),
                                       duration_to_blocks(d["duration"])) for d in repeat))
@@ -142,11 +141,11 @@ def get_permutations(unique_times):
     for ttuple in itertools.product(*unique_times):
         classes = flatten(ttuple)
         timetable = [[None for i in range(24)] for j in range(5)]
-        for pretty_name, day, time, duration in classes:
+        for activity, day, time, duration in classes:
             for i in range(duration):
                 if timetable[day][time + i] is not None:
                     break
-                timetable[day][time + i] = pretty_name
+                timetable[day][time + i] = activity
             else:
                 continue
             break
