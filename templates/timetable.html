@@ -28,7 +28,7 @@
 	</style>
 </head>
 <body>
-	<div>{{ score }}</div>
+	<div>Timetable score: {{ score }}</div>
 	<table>
 		<thead>
 			<tr>
@@ -45,7 +45,9 @@
 			<tr>
 				<td>
 					{% if time is divisibleby 2 %}
-					{% if time > 9 %}
+					{% if time == 8 %}
+					12:00 pm
+					{% elif time > 9 %}
 					{{ time // 2 - 4}}:00 pm
 					{% else %}
 					{{ time // 2 + 8}}:00 am
