@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 """
 for each group, create a list of tuples
 mostly singletons, but lectures will be [(lecture1, lecture2, lecture3)]
