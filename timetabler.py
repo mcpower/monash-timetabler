@@ -14,7 +14,6 @@ import requests
 import json
 import itertools
 import sys
-import colorsys
 import os.path
 from functools import reduce
 from pprint import pprint
