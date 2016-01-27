@@ -18,6 +18,7 @@ import colorsys
 from functools import reduce
 from pprint import pprint
 from flask import Flask, render_template
+from sorting import score, average
 app = Flask(__name__)
 
 API_URL = "https://allocate.timetable.monash.edu/aplus-2016/rest/student/"
@@ -152,58 +153,6 @@ def get_permutations(unique_times):
             break
         else:
             yield timetable
-
-def score(timetable):
-    # Number of days spent on campus
-    days_spent = sum(map(any, timetable))
-    # Variance of day lengths
-    var = variance(list(filter(None, (sum(map(bool, day)) for day in timetable))))
-    # Length of days
-    day_start_end = [] # [(start, end)]
-    breaks = []
-    for day in timetable:
-        start = None
-        end = None
-        cur_break = 0
-        for i in range(24):
-            if day[i]:
-                if start is None:
-                    start = i
-                end = i
-                if cur_break:
-                    breaks.append(cur_break)
-                    cur_break = 0
-            else:
-                if start:
-                    cur_break += 1
-        if start is not None and end is not None:
-            day_start_end.append((start, end))
-
-    break_squared = sum(x*x for x in breaks)
-    total_day_lengths = sum(b-a for a, b in day_start_end)
-    day_starts = sum(a for a, b in day_start_end)
-
-    return (-days_spent, -var, -total_day_lengths, day_starts, break_squared)
-
-def variance(l):
-    n = 0
-    s = 0
-    s_sq = 0
-    for x in l:
-        n += 1
-        s += x
-        s_sq += x*x
-    return (s_sq - (s * s) / n) / n
-
-
-def average(l):
-    n = 0
-    s = 0
-    for x in l:
-        n += 1
-        s += x
-    return s / n
-
 
 def create_palette(unique_times):
     subjects = set()
