@@ -15,6 +15,7 @@ import json
 import itertools
 import sys
 import colorsys
+import os.path
 from functools import reduce
 from pprint import pprint
 from flask import Flask, render_template
@@ -33,7 +34,7 @@ DAY_TO_INDEX_DICT = {
 
 
 class AllocatePlus:
-    def __init__(self, session, data):
+    def __init__(self, session, data, all_acts=None):
         self.session = session
         self.data = data
 
@@ -55,33 +56,35 @@ class AllocatePlus:
                     continue
                 else:
                     print("Unknown status for subject {}, group {}: {}".format(subject, group, status))
+        if all_acts is not None:
+            self.all_acts = all_acts
+        else:
+            self.all_acts = {} # (subject, group): {repeat: {part: json}}
+            # turns into: (subject, group): [[json, json], [json, json], [json, json]]
+            # disregard popularity for now
+            for subject, group, is_by_start_time in self.groups:
+                print("Grabbing activities for", subject, group)
+                url = self.get_api_url("{student[student_code]}/subject/{subject}/group/{group}/activities/", subject=subject, group=group)
+                activities = self.session.get(url).json()
+                g_dict = {}
+                
+                for activity in activities:
+                    activity_data = activities[activity]
+                    act_code = activity_data["activity_code"].split("-")
 
-        self.all_acts = {} # (subject, group): {repeat: {part: json}}
-        # turns into: (subject, group): [[json, json], [json, json], [json, json]]
-        # disregard popularity for now
-        for subject, group, is_by_start_time in self.groups:
-            print("Grabbing activities for", subject, group)
-            url = self.get_api_url("{student[student_code]}/subject/{subject}/group/{group}/activities/", subject=subject, group=group)
-            activities = self.session.get(url).json()
-            g_dict = {}
-            
-            for activity in activities:
-                activity_data = activities[activity]
-                act_code = activity_data["activity_code"].split("-")
+                    repeat = int(act_code[0])
+                    if repeat not in g_dict:
+                        g_dict[repeat] = {}
+                    if len(act_code) == 2:
+                        part = int(act_code[1].lstrip("P"))
+                    else:
+                        part = 1
+                    g_dict[repeat][part] = activity_data
 
-                repeat = int(act_code[0])
-                if repeat not in g_dict:
-                    g_dict[repeat] = {}
-                if len(act_code) == 2:
-                    part = int(act_code[1].lstrip("P"))
-                else:
-                    part = 1
-                g_dict[repeat][part] = activity_data
+                for repeat in g_dict:
+                    g_dict[repeat] = listify(g_dict[repeat])
 
-            for repeat in g_dict:
-                g_dict[repeat] = listify(g_dict[repeat])
-
-            self.all_acts[(subject, group)] = listify(g_dict)
+                self.all_acts[(subject, group)] = listify(g_dict)
 
 
         self.unique_times = []
@@ -102,13 +105,13 @@ class AllocatePlus:
         return API_URL + url.format(*args, **kwargs, **self.data)
 
     @classmethod
-    def login(cls, username, password):
+    def login(cls, username, password, all_acts=None):
         s = requests.Session()
         login = s.post(API_URL + "login", data={"username": username, "password": password})
         s.params.update({"ss": login.json()["token"]})
         homepage = s.get(HOMEPAGE_URL)
         data = json.loads(homepage.text.rsplit("\n", maxsplit=4)[1].lstrip("data=").rstrip(";"))
-        return cls(s, data)
+        return cls(s, data, all_acts)
 
 
 def flatten(ttuple):
@@ -189,11 +192,35 @@ def show_timetable(index=0):
     global perms, subject_hues, group_values
     return render_template("timetable.html", timetable=perms[index], index=index, score=score(perms[index]), subject_hues=subject_hues, group_values=group_values)
 
+
+def read_all_acts(s):
+    json_all_acts = json.loads(s)
+    all_acts = {}
+    for key in json_all_acts:
+        new_key = tuple(key.split("|"))
+        all_acts[new_key] = json_all_acts[key]
+    return all_acts
+
+
+def write_all_acts(all_acts):
+    json_all_acts = {}
+    for key in all_acts:
+        new_key = "|".join(key)
+        json_all_acts[new_key] = all_acts[key]
+    return json.dumps(json_all_acts)
+
+
 if __name__ == '__main__':
     if len(sys.argv) != 3:
         print("usage:", sys.argv[0], "<Monash username> <Monash password>")
         sys.exit()
-    ap = AllocatePlus.login(*sys.argv[1:])
+    print("Logging into Allocate+")
+    if os.path.isfile("all_acts.json"):
+        all_acts = read_all_acts(open("all_acts.json").read())
+        ap = AllocatePlus.login(sys.argv[1], sys.argv[2], all_acts)
+    else:
+        ap = AllocatePlus.login(sys.argv[1], sys.argv[2])
+        open("all_acts.json", "w").write(write_all_acts(ap.all_acts))
     print("Getting all", reduce(int.__mul__, map(len, ap.unique_times)), "timetable permutations")
     perms = list(get_permutations(ap.unique_times))
     print("Sorting all", len(perms), "permutations with no clashes")
