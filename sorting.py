@@ -199,7 +199,7 @@ def get_contact_hours_per_day(timetable):
     NOTE: when I say contact hours, I mean number of 30-minute blocks you spend
     in classes/lectures
     """
-    return list(filter(None, map(get_contact_hours_per_day, timetable)))
+    return list(filter(None, map(get_contact_hours_from_day, timetable)))
 
 
 def get_contact_hours_from_day(day):
