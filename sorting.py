@@ -101,6 +101,14 @@ def score(timetable):
     """
     start_time_diff = sum(abs(start - time("12pm")) for start, end in startends)
 
+    """
+    A friend of mine has a part time job, so they don't want any classes on
+    Wednesday and Thursday.
+    The best way to do this is to minimise the number of contact hours on these
+    days. Wednesday is timetable[2] and Thursday is timetable[3].
+    """
+    job_day_contact_hours = get_contact_hours_from_day(timetable[2]) + get_contact_hours_from_day(timetable[3])
+
 
     """
     This is where we return, as in, the final part of the function!
@@ -191,7 +199,15 @@ def get_contact_hours_per_day(timetable):
     NOTE: when I say contact hours, I mean number of 30-minute blocks you spend
     in classes/lectures
     """
-    return list(filter(None, (sum(map(bool, day)) for day in timetable)))
+    return list(filter(None, map(get_contact_hours_per_day, timetable)))
+
+
+def get_contact_hours_from_day(day):
+    """
+    Returns the number of contact hours in a day.
+    Note that a timetable is a list of days.
+    """
+    return sum(map(bool, day))
 
 
 def num_days_starting_before(startends, index):
