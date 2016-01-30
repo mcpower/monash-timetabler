@@ -47,9 +47,9 @@ class AllocatePlus:
                 if status == "ALLOCATION ADJUSTMENT":
                     pass
                 elif status == "PREFERENCE ENTRY BY ACTIVITY":
-                    self.groups.append((subject, group, False))
+                    self.groups.append((subject, group))
                 elif status == "PREFERENCE ENTRY BY START TIME":
-                    self.groups.append((subject, group, True))
+                    self.groups.append((subject, group))
                 elif status == "READ ONLY":
                     continue
                 elif status == "OFF":
@@ -62,7 +62,7 @@ class AllocatePlus:
             self.all_acts = {} # (subject, group): {repeat: {part: json}}
             # turns into: (subject, group): [[json, json], [json, json], [json, json]]
             # disregard popularity for now
-            for subject, group, is_by_start_time in self.groups:
+            for subject, group in self.groups:
                 print("Grabbing activities for", subject, group)
                 url = self.get_api_url("{student[student_code]}/subject/{subject}/group/{group}/activities/", subject=subject, group=group)
                 activities = self.session.get(url).json()
@@ -87,16 +87,20 @@ class AllocatePlus:
                 self.all_acts[(subject, group)] = listify(g_dict)
 
 
-        self.unique_times = []
+        self.unique_times = {}
         for key in self.all_acts:
             times = set()
             for repeat in self.all_acts[key]:
-                parts = tuple(sorted((key,
-                                      day_to_index(d["day_of_week"]),
+                parts = tuple(sorted((day_to_index(d["day_of_week"]),
                                       time_to_blocks(d["start_time"]),
                                       duration_to_blocks(d["duration"])) for d in repeat))
                 times.add(parts)
-            self.unique_times.append(times)
+            self.unique_times[key] = list(map(list, times))
+
+        self.group_times = [] # zip with self.groups to find how long self.unique_times is
+        for group in self.groups:
+            self.group_times.append(len(self.unique_times[group]))
+
 
     def update_data(self):
         self.data = self.session.get(self.get_api_url("{student[student_code]}/")).json()
@@ -142,29 +146,32 @@ def duration_to_blocks(dur):
     return int(dur) // 30
 
 
-def get_permutations(unique_times):
-    for ttuple in itertools.product(*unique_times):
-        classes = flatten(ttuple)
-        timetable = [[None for i in range(24)] for j in range(5)]
-        for activity, day, time, duration in classes:
-            for i in range(duration):
-                if timetable[day][time + i] is not None:
-                    break
-                timetable[day][time + i] = activity
-            else:
-                continue
-            break
-        else:
-            yield timetable
+def get_permutations(ap):
+    for group_indices in itertools.product(*map(range, ap.group_times)):
+        activities = [activity for index, group in zip(group_indices, ap.groups) for activity in ap.unique_times[group][index]]
+        # activities is list of (day, time, duration) tuples
+        timetable = [[] for day in range(5)]
+        for day_index, time, duration in activities:
+            timetable[day_index].append((time, duration))
 
-def create_palette(unique_times):
+        for day in timetable:
+            sorted_day = sorted(day)
+            if any(day2[0] < day1[0] + day1[1] for day1, day2 in zip(sorted_day, sorted_day[1:])):
+                break
+        else:
+            yield group_indices
+
+def create_timetable(activities):
+    # activities is list of (day, time, duration) tuples
+    pass
+
+
+def create_palette(ap):
     subjects = set()
     group_to_options = {} # {group: [number of options]}
-    for s in unique_times:
-        activity, _, _, _ = next(iter(s))[0]
-        subject, group = activity
+    for (subject, group), times in zip(ap.groups, ap.group_times):
         subjects.add(subject)
-        group_to_options.setdefault(group, []).append(len(s))
+        group_to_options.setdefault(group, []).append(times)
 
     for group in group_to_options:
         group_to_options[group] = average(group_to_options[group])
@@ -189,7 +196,7 @@ def create_palette(unique_times):
 @app.route("/")
 @app.route("/<int:index>")
 def show_timetable(index=0):
-    global perms, subject_hues, group_values
+    global ap, perms, subject_hues, group_values
     return render_template("timetable.html", timetable=perms[index], index=index, score=score(perms[index]), subject_hues=subject_hues, group_values=group_values)
 
 
@@ -221,10 +228,10 @@ if __name__ == '__main__':
     else:
         ap = AllocatePlus.login(sys.argv[1], sys.argv[2])
         open("all_acts.json", "w").write(write_all_acts(ap.all_acts))
-    print("Getting all", reduce(int.__mul__, map(len, ap.unique_times)), "timetable permutations")
-    perms = list(get_permutations(ap.unique_times))
-    print("Sorting all", len(perms), "permutations with no clashes")
-    perms.sort(key=score, reverse=True)
+    print("Finding all timetables without clashes from", reduce(int.__mul__, ap.group_times), "timetables")
+    perms = list(get_permutations(ap))
+    print("Sorting all", len(perms), "permutations")
+    # perms.sort(key=lambda activities: score(create_timetable(activities)), reverse=True)
     print("Generating colour palette")
-    subject_hues, group_values = create_palette(ap.unique_times)
-    app.run()
+    subject_hues, group_values = create_palette(ap)
+    # app.run()
