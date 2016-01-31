@@ -54,7 +54,7 @@
 				if (!requesting) {
 					requesting = true;
 					$.ajax({
-						url: "/perms/" + perms.length + ":" + (perms.length + 100),
+						url: "/perms/" + perms.length + ":" + (perms.length + 1000),
 						dataType: "json",
 						success: function(arr) {
 							perms = perms.concat(arr);

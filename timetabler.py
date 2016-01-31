@@ -199,7 +199,7 @@ def create_palette(ap):
 
 @app.route("/perms/<int:start>:<int:end>")
 def get_perms(start, end):
-    return Response(response=json.dumps(perms[start:end]),
+    return Response(response=json.dumps(perms[start:end], separators=(",", ":")),
                     status=200,
                     mimetype="application/json")
 
