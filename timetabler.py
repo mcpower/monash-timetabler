@@ -161,8 +161,7 @@ def get_permutations(ap):
         else:
             yield group_indices
 
-def create_timetable(activities):
-    # activities is list of (day, time, duration) tuples
+def create_timetable(ap, group_indices):
     pass
 
 
@@ -231,7 +230,7 @@ if __name__ == '__main__':
     print("Finding all timetables without clashes from", reduce(int.__mul__, ap.group_times), "timetables")
     perms = list(get_permutations(ap))
     print("Sorting all", len(perms), "permutations")
-    # perms.sort(key=lambda activities: score(create_timetable(activities)), reverse=True)
+    # perms.sort(key=lambda group_indices: score(create_timetable(ap, group_indices)), reverse=True)
     print("Generating colour palette")
     subject_hues, group_values = create_palette(ap)
     # app.run()
