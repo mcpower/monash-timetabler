@@ -241,4 +241,4 @@ if __name__ == '__main__':
     perms.sort(key=lambda group_indices: score(create_timetable(ap, group_indices)), reverse=True)
     print("Generating colour palette")
     subject_hues, group_values = create_palette(ap)
-    app.run(debug=True)
+    app.run()
