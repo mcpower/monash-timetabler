@@ -18,7 +18,7 @@ import sys
 import os.path
 from functools import reduce
 from pprint import pprint
-from flask import Flask, render_template
+from flask import Flask, render_template, Response
 from sorting import score, average
 app = Flask(__name__)
 
@@ -197,14 +197,19 @@ def create_palette(ap):
 
     return subject_hues, group_values
 
+@app.route("/perms/<int:start>:<int:end>")
+def get_perms(start, end):
+    return Response(response=json.dumps(perms[start:end]),
+                    status=200,
+                    mimetype="application/json")
+
 
 @app.route("/")
-@app.route("/<int:index>")
-def show_timetable(index=0):
-    global ap, perms, subject_hues, group_values
+def show_timetable():
+    global ap, subject_hues, group_values
     j = json.dumps
     json_unique_times = {"|".join(key): ap.unique_times[key] for key in ap.unique_times}
-    return render_template("timetable.html", j=j, group_indices=perms[index], index=index, subject_hues=subject_hues, group_values=group_values, ap=ap, json_unique_times=json_unique_times)
+    return render_template("timetable.html", j=j, subject_hues=subject_hues, group_values=group_values, ap=ap, json_unique_times=json_unique_times)
 
 
 def read_all_acts(s):

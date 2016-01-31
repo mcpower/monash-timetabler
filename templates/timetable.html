@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Timetable #{{ index }}</title>
+	<title>Timetables</title>
 	<meta charset='utf-8' />
 	<link href='/static/fullcalendar.min.css' rel='stylesheet' />
 	<script src='/static/lib/moment.min.js'></script>
 	<script src='/static/lib/jquery.min.js'></script>
 	<script src='/static/fullcalendar.min.js'></script>
 	<script>
-		var current_group_indices = {{ j(group_indices)|safe }};
+		var perms = [];
+		var current_index = 0;
 		var unique_times = {{ j(json_unique_times)|safe }};
 		var groups = {{ j(ap.groups)|safe }};
 		var subject_hues = {{ j(subject_hues)|safe }};
@@ -47,12 +48,30 @@
 			}
 		}
 
-		var events = [];
-		for (var i = 0; i < groups.length; i++) {
-			var key = groups[i].join("|");
-			var to_concat = unique_times[key][current_group_indices[i]];
-			events = events.concat(to_concat);
-		};
+		function get_events(callback) {
+			if (current_index >= perms.length) {
+				$.ajax({
+					url: "/perms/" + perms.length + ":" + (perms.length + 100),
+					dataType: "json",
+					async: false,
+					success: function(arr) {
+						perms = perms.concat(arr);
+					}
+				});
+			}
+			var events = [];
+			for (var i = 0; i < groups.length; i++) {
+				var key = groups[i].join("|");
+				var to_concat = unique_times[key][perms[current_index][i]];
+				events = events.concat(to_concat);
+			};
+			callback(events);
+		}
+
+		function updateIndexDisplay() {
+			$("#index").html((current_index + 1).toString());
+		}
+		
 
 		$(document).ready(function() {
 
@@ -65,9 +84,22 @@
 				allDaySlot: false,
 				contentHeight: "auto",
 				columnFormat: "ddd",
-				events: events
+				events: function(start, end, timezone, callback) {
+					get_events(callback);
+				}
 			});
-			
+			$("#prev").click(function() {
+				if (current_index != 0) {
+					current_index--;
+					$('#calendar').fullCalendar("refetchEvents");
+					updateIndexDisplay();
+				}
+			});
+			$("#next").click(function() {
+				current_index++;
+				$('#calendar').fullCalendar("refetchEvents");
+				updateIndexDisplay();
+			});
 		});
 
 	</script>
@@ -86,7 +118,8 @@
 	</style>
 </head>
 <body>
+	<h1>Timetable <span id="index">1</span></h1>
 	<div id="calendar"></div>
-	<a href="{{ index - 1 }}">Prev</a> <a href="{{ index + 1 }}">Next</a>
+	<button id="prev">Previous</button><button id="next">Next</button>
 </body>
 </html>
