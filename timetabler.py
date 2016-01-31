@@ -202,8 +202,9 @@ def create_palette(ap):
 @app.route("/<int:index>")
 def show_timetable(index=0):
     global ap, perms, subject_hues, group_values
-    timetable = create_timetable(ap, perms[index])
-    return render_template("timetable.html", timetable=timetable, index=index, score=score(timetable), subject_hues=subject_hues, group_values=group_values)
+    j = json.dumps
+    json_unique_times = {"|".join(key): ap.unique_times[key] for key in ap.unique_times}
+    return render_template("timetable.html", j=j, group_indices=perms[index], index=index, subject_hues=subject_hues, group_values=group_values, ap=ap, json_unique_times=json_unique_times)
 
 
 def read_all_acts(s):
@@ -240,4 +241,4 @@ if __name__ == '__main__':
     perms.sort(key=lambda group_indices: score(create_timetable(ap, group_indices)), reverse=True)
     print("Generating colour palette")
     subject_hues, group_values = create_palette(ap)
-    app.run()
+    app.run(debug=True)

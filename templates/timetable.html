@@ -2,74 +2,84 @@
 <html>
 <head>
 	<title>Timetable #{{ index }}</title>
-	<style type="text/css">
-		table {
-			table-layout: fixed;
-			width: 100%;
-			height: calc(100% - 80px);
-			white-space: nowrap;
-			border-collapse: collapse;
+	<meta charset='utf-8' />
+	<link href='/static/fullcalendar.min.css' rel='stylesheet' />
+	<script src='/static/lib/moment.min.js'></script>
+	<script src='/static/lib/jquery.min.js'></script>
+	<script src='/static/fullcalendar.min.js'></script>
+	<script>
+		var current_group_indices = {{ j(group_indices)|safe }};
+		var unique_times = {{ j(json_unique_times)|safe }};
+		var groups = {{ j(ap.groups)|safe }};
+		var subject_hues = {{ j(subject_hues)|safe }};
+		var group_values = {{ j(group_values)|safe }};
+
+
+
+		function toMoment(day, block) {
+			return moment({h: ((block >> 1) + 8), m: ((block & 1) * 30)}).day(day + 1);
 		}
 
-		body, html {
-			height: 100%;
-			margin: 0px;
+		function getColor(key) {
+			var split = key.split("|") // split[0] is subject, split[1] is group
+			return "hsl(" + subject_hues[split[0]] + ", 100%, " + group_values[split[1]] + "%)";
 		}
 
-		tr:nth-child(even) {
-			background-color: #EEE;
-			border-bottom: 1px solid #BBB;
+		function getStartEndMoments(activity) {
+			return [toMoment(activity[0], activity[1]), toMoment(activity[0], activity[1] + activity[2])];
 		}
 
-		tr:nth-child(odd) {
-			background-color: #FFF;
-			border-top: 1px solid #BBB;
+		for (var key in unique_times) {
+			if (unique_times.hasOwnProperty(key)) {
+				var color = getColor(key);
+				var prettyName = key.replace("|", "\n");
+				unique_times[key] = unique_times[key].map(function(big_arr) {
+					return big_arr.map(function(activity) {
+						var startEnd = getStartEndMoments(activity);
+						return {
+							title: prettyName,
+							start: startEnd[0],
+							end: startEnd[1],
+							color: color
+						};
+					});
+				});
+			}
 		}
+
+		var events = [];
+		for (var i = 0; i < groups.length; i++) {
+			var key = groups[i].join("|");
+			var to_concat = unique_times[key][current_group_indices[i]];
+			events = events.concat(to_concat);
+		};
+
+		$(document).ready(function() {
+
+			$('#calendar').fullCalendar({
+				defaultView: "agendaWeek",
+				events: events
+			});
+			
+		});
+
+	</script>
+	<style>
+	body {
+		margin: 40px 10px;
+		padding: 0;
+		font-family: "Lucida Grande",Helvetica,Arial,Verdana,sans-serif;
+		font-size: 14px;
+	}
+
+	#calendar {
+		max-width: 900px;
+		margin: 0 auto;
+	}
 	</style>
 </head>
 <body>
-	<div>Timetable score: {{ score }}</div>
-	<table>
-		<thead>
-			<tr>
-				<th width="60"></th>
-				<th>Monday</th>
-				<th>Tuesday</th>
-				<th>Wednesday</th>
-				<th>Thursday</th>
-				<th>Friday</th>
-			</tr>
-		</thead>
-		<tbody>
-			{% for time in range(24) %}
-			<tr>
-				<td>
-					{% if time is divisibleby 2 %}
-					{% if time == 8 %}
-					12:00 pm
-					{% elif time > 9 %}
-					{{ time // 2 - 4}}:00 pm
-					{% else %}
-					{{ time // 2 + 8}}:00 am
-					{% endif %}
-					{% endif %}
-				</td>
-				{% for day in range(5) %}
-					{% if timetable[day][time] %}
-						{% set subject, group = timetable[day][time] %}
-						<td style="background-color:hsl({{ subject_hues[subject] }}, 100%, {{ group_values[group] }}%);color:{{ 'black' if group_values[group] > 40 else 'white' }}">
-							{% if time == 0 or timetable[day][time-1] != timetable[day][time] %}
-							{{ subject }} {{ group }}
-							{% endif %}&nbsp;
-						</td>
-					{% else %}
-						<td>&nbsp;</td>
-					{% endif %}
-				{% endfor %}
-			</tr>
-			{% endfor %}
-		</tbody>
-	</table>
+	<div id="calendar"></div>
 	<a href="{{ index - 1 }}">Prev</a> <a href="{{ index + 1 }}">Next</a>
 </body>
 </html>
