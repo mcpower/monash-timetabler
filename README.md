@@ -1,5 +1,7 @@
 # Monash Timetabler
 
+**Want to get this script running as soon as possible?** Read [how_to_run.md](how_to_run.md)!
+
 ## Prerequisites
 
 * Python 3
