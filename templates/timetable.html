@@ -48,16 +48,22 @@
 			}
 		}
 
+		var requesting = false;
 		function get_events(callback) {
 			if (current_index >= perms.length) {
-				$.ajax({
-					url: "/perms/" + perms.length + ":" + (perms.length + 100),
-					dataType: "json",
-					async: false,
-					success: function(arr) {
-						perms = perms.concat(arr);
-					}
-				});
+				if (!requesting) {
+					requesting = true;
+					$.ajax({
+						url: "/perms/" + perms.length + ":" + (perms.length + 100),
+						dataType: "json",
+						success: function(arr) {
+							perms = perms.concat(arr);
+							requesting = false;
+							get_events(callback);
+						}
+					});
+				}
+				return;
 			}
 			var events = [];
 			for (var i = 0; i < groups.length; i++) {
@@ -75,14 +81,18 @@
 		function decrement() {
 			if (current_index != 0) {
 				current_index--;
-				$('#calendar').fullCalendar("refetchEvents");
+				if (!requesting) {
+					$('#calendar').fullCalendar("refetchEvents");
+				}
 				updateIndexDisplay();
 			}
 		}
 
 		function increment() {
 			current_index++;
-			$('#calendar').fullCalendar("refetchEvents");
+			if (!requesting) {
+				$('#calendar').fullCalendar("refetchEvents");
+			}
 			updateIndexDisplay();
 		}
 
