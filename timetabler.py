@@ -150,11 +150,11 @@ def get_permutations(ap):
     for group_indices in itertools.product(*map(range, ap.group_times)):
         activities = [activity for index, group in zip(group_indices, ap.groups) for activity in ap.unique_times[group][index]]
         # activities is list of (day, time, duration) tuples
-        timetable = [[] for day in range(5)]
+        activities_per_day = [[] for day in range(5)]
         for day_index, time, duration in activities:
-            timetable[day_index].append((time, duration))
+            activities_per_day[day_index].append((time, duration))
 
-        for day in timetable:
+        for day in activities_per_day:
             sorted_day = sorted(day)
             if any(day2[0] < day1[0] + day1[1] for day1, day2 in zip(sorted_day, sorted_day[1:])):
                 break
@@ -162,7 +162,12 @@ def get_permutations(ap):
             yield group_indices
 
 def create_timetable(ap, group_indices):
-    pass
+    activities = [(group,) + activity for index, group in zip(group_indices, ap.groups) for activity in ap.unique_times[group][index]]
+    timetable = [[None for block in range(24)] for day in range(5)]
+    for group, day, time, duration in activities:
+        for i in range(duration):
+            timetable[day][time + i] = group
+    return timetable
 
 
 def create_palette(ap):
@@ -230,7 +235,7 @@ if __name__ == '__main__':
     print("Finding all timetables without clashes from", reduce(int.__mul__, ap.group_times), "timetables")
     perms = list(get_permutations(ap))
     print("Sorting all", len(perms), "permutations")
-    # perms.sort(key=lambda group_indices: score(create_timetable(ap, group_indices)), reverse=True)
+    perms.sort(key=lambda group_indices: score(create_timetable(ap, group_indices)), reverse=True)
     print("Generating colour palette")
     subject_hues, group_values = create_palette(ap)
     # app.run()
