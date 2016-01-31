@@ -56,6 +56,7 @@ class AllocatePlus:
                     continue
                 else:
                     print("Unknown status for subject {}, group {}: {}".format(subject, group, status))
+        self.groups.sort()
         if all_acts is not None:
             self.all_acts = all_acts
         else:
@@ -95,7 +96,7 @@ class AllocatePlus:
                                       time_to_blocks(d["start_time"]),
                                       duration_to_blocks(d["duration"])) for d in repeat))
                 times.add(parts)
-            self.unique_times[key] = list(map(list, times))
+            self.unique_times[key] = sorted(map(list, times))
 
         self.group_times = [] # zip with self.groups to find how long self.unique_times is
         for group in self.groups:
