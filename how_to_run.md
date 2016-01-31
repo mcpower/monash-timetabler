@@ -19,7 +19,7 @@ Once you're here, be careful! Be sure to tick the "Add Python 3.5 to your PATH" 
 
 ## 2. Get the script
 
-Download a zip file of the script [here](archive/master.zip). If that doesn't work, you should be able to find a "Download ZIP" button on the front page of the repository.
+Download a zip file of the script [here](https://github.com/mcpower/monash-timetabler/archive/master.zip). If that doesn't work, you should be able to find a "Download ZIP" button on the front page of the repository.
 
 Unzip it somewhere where you can find, and open it up. You should be able to see "timetabler.py" in the folder.
 
@@ -56,7 +56,7 @@ Generating colour palette
  * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
 ```
 
-Once it is running, go to 127.0.0.1:5000 in a web browser and check out your timetables. You can use your arrow keys to navigate too.
+Once it is running, go to http://127.0.0.1:5000/ in a web browser and check out your timetables. You can use your arrow keys to navigate too.
 
 If you'd like to change how the timetables are sorted, take a look at `sorting.py`. It should have all the information needed for you to make your own sorting algorithm.
 
