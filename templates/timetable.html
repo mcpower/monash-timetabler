@@ -72,6 +72,20 @@
 			$("#index").html((current_index + 1).toString());
 		}
 		
+		function decrement() {
+			if (current_index != 0) {
+				current_index--;
+				$('#calendar').fullCalendar("refetchEvents");
+				updateIndexDisplay();
+			}
+		}
+
+		function increment() {
+			current_index++;
+			$('#calendar').fullCalendar("refetchEvents");
+			updateIndexDisplay();
+		}
+
 
 		$(document).ready(function() {
 
@@ -88,17 +102,21 @@
 					get_events(callback);
 				}
 			});
-			$("#prev").click(function() {
-				if (current_index != 0) {
-					current_index--;
-					$('#calendar').fullCalendar("refetchEvents");
-					updateIndexDisplay();
+			$("#prev").click(increment);
+			$("#next").click(decrement);
+			$(document).keydown(function(event) {
+				switch (event.keyCode) {
+				case 37:
+				case 38:
+					decrement();
+					break;
+				case 39:
+				case 40:
+					increment();
+					break;
+				default:
+					return;
 				}
-			});
-			$("#next").click(function() {
-				current_index++;
-				$('#calendar').fullCalendar("refetchEvents");
-				updateIndexDisplay();
 			});
 		});
 
