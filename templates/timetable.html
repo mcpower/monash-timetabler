@@ -58,6 +58,13 @@
 
 			$('#calendar').fullCalendar({
 				defaultView: "agendaWeek",
+				header: false,
+				minTime: "08:00",
+				maxTime: "20:00",
+				weekends: false,
+				allDaySlot: false,
+				contentHeight: "auto",
+				columnFormat: "ddd",
 				events: events
 			});
 			
