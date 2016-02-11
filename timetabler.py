@@ -16,6 +16,7 @@ import json
 import itertools
 import sys
 import os.path
+import re
 from functools import reduce
 from pprint import pprint
 from flask import Flask, render_template, Response
@@ -115,7 +116,7 @@ class AllocatePlus:
         login = s.post(API_URL + "login", data={"username": username, "password": password})
         s.params.update({"ss": login.json()["token"]})
         homepage = s.get(HOMEPAGE_URL)
-        data = json.loads(homepage.text.rsplit("\n", maxsplit=4)[1].lstrip("data=").rstrip(";"))
+        data = json.loads(re.search(r"^data=([^;]+);$", homepage.text, re.M).group(1))
         return cls(s, data, all_acts)
 
 
