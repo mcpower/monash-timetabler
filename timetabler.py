@@ -17,14 +17,15 @@ import itertools
 import sys
 import os.path
 import re
+import urllib.parse
 from functools import reduce
 from pprint import pprint
 from flask import Flask, render_template, Response
 from sorting import score, average
 app = Flask(__name__)
 
-API_URL = "https://allocate.timetable.monash.edu/aplus-2016/rest/student/"
-HOMEPAGE_URL = "https://allocate.timetable.monash.edu/aplus-2016/student/"
+API_URL = "https://my-timetable.monash.edu/odd/rest/student/"
+HOMEPAGE_URL = "https://my-timetable.monash.edu/odd/student"
 DAY_TO_INDEX_DICT = {
     "Mon": 0,
     "Tue": 1,
@@ -69,7 +70,6 @@ class AllocatePlus:
                 url = self.get_api_url("{student[student_code]}/subject/{subject}/group/{group}/activities/", subject=subject, group=group)
                 activities = self.session.get(url).json()
                 g_dict = {}
-                
                 for activity in activities:
                     activity_data = activities[activity]
                     act_code = activity_data["activity_code"].split("-")
@@ -113,10 +113,15 @@ class AllocatePlus:
     @classmethod
     def login(cls, username, password, all_acts=None):
         s = requests.Session()
-        login = s.post(API_URL + "login", data={"username": username, "password": password})
-        s.params.update({"ss": login.json()["token"]})
-        homepage = s.get(HOMEPAGE_URL)
-        data = json.loads(re.search(r"^data=([^;]+);$", homepage.text, re.M).group(1))
+        saml_page = s.get(HOMEPAGE_URL)
+        login = s.post(saml_page.url, data={
+            "UserName": "Monash\\" + username,
+            "Password": password,
+            "AuthMethod": "FormsAuthentication"
+        })
+        ss = urllib.parse.parse_qs(urllib.parse.urlparse(login.url).query)["ss"][0]
+        s.params.update({"ss": ss})
+        data = json.loads(re.search(r"^data=([^;]+);$", login.text, re.M).group(1))
         return cls(s, data, all_acts)
 
 
